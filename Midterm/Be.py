@@ -23,7 +23,7 @@ def replace(V, val):
 
 
 
-V = pd.read_csv(os.getcwd() + "/V.csv")
+V = pd.read_csv(os.getcwd() + "/Midterm/V.csv")
 VV = V["V"].copy()
 VNew = V.copy()
 for i in range(81):
@@ -46,7 +46,7 @@ ground_Be = np.zeros(6, dtype=bool)
 for i in range(nparticles):
     ground_Be[i] = True
 
-MBState = State(ground_Be, Z, VBe)
+MBState = State(ground_Be, Z, VBe, V)
 print(MBState.H0(0))
 print(MBState.HI(0,0))
 print(MBState.H0(0)+MBState.HI(0,0))

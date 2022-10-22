@@ -43,7 +43,7 @@ class State:
     """
     Performs FCI calculations on many-body state. .
     """
-    def __init__(self, ground_state, Z, interaction_integrals):
+    def __init__(self, ground_state, Z, interaction_integrals, interaction_integralsAS):
         """
         Args:
             ground_state        np.array(size=(nbasis,), dtype=bool)
@@ -54,6 +54,7 @@ class State:
         """
         self.Z = Z
         self.V = interaction_integrals
+        self.VAS = interaction_integralsAS
         self.nparticles = np.sum(ground_state)
         self.nbasis = len(ground_state)
         self.ground_state = QuantumState(ground_state)
@@ -199,14 +200,66 @@ class State:
                 HMat[j, i] = HMat[i,j]
         return HMat
 
+    def HMat2(self):
+        dim = len(self.mpbasis)
+        HMat = np.zeros((dim, dim))
+        for i in range(dim):
+            HMat[i, i] += self.H0(i)
+            for j in range(i, dim):
+                HMat[i, j] += self.HI2(i, j)
+                HMat[j, i] = HMat[i, j]
+        return HMat
+
 
     def solve(self):
         H = self.HMat()
         eigvals, eigvecs = np.linalg.eigh(H)
         return H, eigvals, eigvecs
 
+    def HI2(self, idx1, idx2):
+        state1 = self.mpbasis[idx1]
+        state2 = self.mpbasis[idx2]
+        energy = 0
+        ph1 = state1.ph
+        ph2 = state2.ph
+        phidxs1 = [k for k in range(self.nbasis) if ph1[k]]
+        phidxs2 = [k for k in range(self.nbasis) if ph2[k]]
+        if np.sum(ph1)!=0:
+            h1 = phidxs1[0]
+            p1 = phidxs1[1]
+        if np.sum(ph2)!=0:
+            h2 = phidxs2[0]
+            p2 = phidxs2[1]
+        if idx1 == 0 and idx2 == 0:
+            for k in range(self.nparticles):
+                for l in range(self.nparticles):
+                    energy += 0.5*self.VAS[k, l, k, l]
+                    energy -= 0.5*self.VAS[k, l, l, k]
 
+        elif idx1 == 0:
+            for k in range(self.nparticles):
+                energy += self.VAS[h2, k, p2, k]
+                energy -= self.VAS[h2, k, k, p2]
 
+        else:
+            energy += self.VAS[p1, h2, h1, p2]
+            energy -= self.VAS[p1, h2, p2, h1]
+            for k in range(self.nparticles):
+                energy += self.VAS[p1, k, p2, k]*(h1==h2)
+                energy -= self.VAS[p1, k, k, p2]*(h1==h2)
+                energy -= self.VAS[h2, k, h1, k]*(p1==p2)
+                energy += self.VAS[h2, k, k, h1]*(p1==p2)
+                for l in range(self.nparticles):
+                    if h1 == h2 and p1 == p2:
+                        energy += 0.5*self.VAS[k, l, k, l]
+                        energy -= 0.5*self.VAS[k, l, l, k]
+
+        return energy
+
+    def solve2(self):
+        H = self.HMat2()
+        eigvals, eigvecs = np.linalg.eigh(H)
+        return H, eigvals, eigvecs
 
 
 

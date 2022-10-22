@@ -1,4 +1,4 @@
-from src import QuantumState, State, Hamiltonian, Reformatter
+from src import QuantumState, State, Hamiltonian, Reformatter, HF
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -38,30 +38,24 @@ VHedata = VNew
 reformatter = Reformatter(3, 6)
 VHe = reformatter.get_values(VHedata)
 VHe_AS = reformatter.make_antisymmetrized_elements(VHedata)
-print(VHe[0,0,0,0])
+for i in range(2):
+    ni = i // 2
+    for j in range(2):
+        nj = j // 2
+        print(f"for i={i} and j={j}: ")
+        print("VHE: ", VHe[ni, nj, ni, nj])
+        print("VHe (AS): ", VHe[ni, nj, nj, ni])
+        print("VHeAS: ", VHe_AS[i, j, i, j])
+        print("VHeAS(AS): ", VHe_AS[i, j, j, i])
+
+
+
 Z = 2
-print(VHe)
 nbasis = 6
 nparticles = 2
 ground_He_ansatz = np.zeros(6, dtype=bool)
 for i in range(nparticles):
     ground_He_ansatz[i] = True
 
-MBState = State(ground_He_ansatz, Z, VHe, VHe_AS)
-print(MBState.H0(0))
-print(MBState.HI(0,0))
-
-
-H, eigvals, eigvecs = MBState.solve()
-H2, eigvals2, eigvecs2 = MBState.solve2()
-
-print("Hamiltonian matrix: ")
-print(H)
-print("Eigenvalues: ")
-print(eigvals)
-print("Eigenvectors: ")
-print(eigvecs)
-print("H2: ")
-print(H2)
-print("Eigenvalues 2: ")
-print(eigvals2)
+hf = HF(ground_He_ansatz, Z, VHe_AS)
+hfenergies = hf.HFsolve(10, 1e-8)
