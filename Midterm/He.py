@@ -52,7 +52,6 @@ with labeling 0,1,2,3,4,5
 VHe_AS = reformatter.make_antisymmetrized_elements(VHedata)
 
 Z = 2
-
 # Makes the ground state ansatz
 nbasis = 6
 nparticles = 2
@@ -64,12 +63,10 @@ for i in range(nparticles):
 MBState = State(ground_He_ansatz, Z, VHe, VHe_AS)
 
 
-H, eigvals, eigvecs = MBState.solve()
-H2, eigvals2, eigvecs2 = MBState.solve2()
+H, eigvals, eigvecs = MBState.diagonalize()
+
 
 print("Hamiltonian matrix: ")
 print(H)
-print("H2: ")
-print(H2)
-print("Eigenvalues 2: ")
-print(eigvals2)
+print("Eigenvalues: ")
+print(eigvals)
