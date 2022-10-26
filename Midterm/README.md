@@ -4,7 +4,7 @@
 Object that takes in a ground state ansatz in a hydrogen-like basis set for single-particle functions, and returns all possible singly-excited states. It also is able to calculate what I call the CI1p1h energies of the system.
 
 ## Quantum state
-Object that takes in a bit string and converts it into particle-hole formalism.
+Object that takes in a bit string and converts it into particles and holes from the particle-hole formalism. 
 
 ## Reformatter
 Object that reformats interactions.
