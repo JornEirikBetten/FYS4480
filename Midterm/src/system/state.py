@@ -41,19 +41,29 @@ class QuantumState:
 
 class State:
     """
-    Performs FCI calculations on many-body state. .
+    State makes the 1p1h information from the ground state information
+    and can perform CI1p1h calculations on many-body state. 
     """
     def __init__(self, ground_state, Z, interaction_integrals, interaction_integralsAS):
         """
         Args:
-            ground_state        np.array(size=(nbasis,), dtype=bool)
+            ground_state            np.array(size=(nbasis,), dtype=bool)
+                ground state ansatz in basis
+            Z                       int
+                electric charge on nucleus
             interaction_integrals   np.array (size=(nbasis//2, nbasis//2,
                                                     nbasis//2, nbasis//2))
                 Contains all integral values of the electron-electron
                 interactions.
+            interaction_integralsAS np.array (size=(nbasis, nbasis,
+                                                    nbasis, nbasis))
+                Contains all antisymmetrized integral values of the electron-electron
+                interactions.
         """
         self.Z = Z
         self.V = interaction_integrals
+        # Creates the antisymmetrized integral values
+        # for all indices p, q, r, s
         self.VAS = interaction_integralsAS
         self.nparticles = np.sum(ground_state)
         self.nbasis = len(ground_state)
@@ -89,6 +99,10 @@ class State:
 
 
     def make_set_of_states(self):
+        """
+        Makes all possible 1p1h excited states
+        in our basis.
+        """
         ground_state = self.ground_state.state
         states = [ground_state]
         num_excited, nbasis = self.particles.shape
@@ -121,102 +135,26 @@ class State:
         energy = np.sum(-self.Z*self.Z/(2*n*n))
         return energy
 
-    def HI(self, idx1, idx2):
-        state1 = self.mpbasis[idx1]
-        state2 = self.mpbasis[idx2]
-        energy = 0
-        ph1 = state1.ph
-        ph2 = state2.ph
-
-
-        if (np.sum(ph1) != 0):
-            ni = state1.nph[0]; msi = state1.msph[0]
-            na = state1.nph[1]; msa = state1.msph[1]
-        if (np.sum(ph2) != 0):
-            nj = state2.nph[0]; msj = state2.msph[0]
-            nb = state2.nph[1]; msb = state2.msph[1]
-
-        if ((np.sum(ph1) != 0) and (np.sum(ph2) != 0)):
-            # <ai||ib>_AS
-            # direct
-            energy += self.V[na, nj, ni, nb]
-            # exchange
-            energy -= self.V[na,nj,nb,ni]*(msa == msb)
-            # sum_{k<F}<ak|v|bk>AS\delta{ij} - <ik|v|ik>AS\delta{ab}
-            for k in range(self.nparticles):
-                nk = k // 2
-                msk = (k%2 == 0)
-                # direct
-                if (ni == nk and msi == msk):
-                    energy += 0
-                else:
-                    energy += self.V[na, nk, nb, nk]*(msi==msj and ni==nj)
-                    # exhange
-                    energy -= self.V[na, nk, nk, nb]*(msk == msa)*(msk == msb)*\
-                              (msi==msj and ni==nj)*(ni != nk)
-                if (ni == nk and msi == msk) or (nj == nk and msj == msk):
-                    energy += 0
-                else:
-                    energy -= self.V[nj, nk, ni, nk]*(msa==msb and na==nb)
-                    energy += self.V[nj, nk, nk, ni]*(msa==msb and na==nb)*(msi==msk)
-
-        if (np.sum(ph1) == 0) and (np.sum(ph2)!=0):
-            for k in range(self.nparticles):
-                nk = k // 2
-                msk = (k%2 == 0)
-                if (nj==nk and msk==msj):
-                    energy += 0
-                else:
-                    energy += self.V[nj, nk, nb, nk]
-                    energy -= self.V[nj, nk, nk, nb]*(msk==msb)
-
-        for k in range(self.nparticles):
-            nk = k // 2
-            msk = (k%2 == 0)
-            for l in range(self.nparticles):
-                nl = l // 2
-                msl = (l%2 == 0)
-                # direct
-                if (nk == nl and msk == msl):
-                    energy += 0
-                else:
-                    energy += 0.5*self.V[nk, nl, nk, nl]*\
-                            (np.sum(ph1==ph2)==self.nbasis)
-                    # exchange
-                    energy -= 0.5*self.V[nk, nl, nl, nk]*\
-                             (np.sum(ph1==ph2)==self.nbasis)*(msk==msl)
-
-        return energy
-
-
-
     def HMat(self):
+        """
+        Finds all elements of the Hamiltonian
+        matrix.
+        """
         dim = len(self.mpbasis)
         HMat = np.zeros((dim, dim))
         for i in range(dim):
             HMat[i, i] += self.H0(i)
             for j in range(i, dim):
                 HMat[i, j] += self.HI(i, j)
-                HMat[j, i] = HMat[i,j]
-        return HMat
-
-    def HMat2(self):
-        dim = len(self.mpbasis)
-        HMat = np.zeros((dim, dim))
-        for i in range(dim):
-            HMat[i, i] += self.H0(i)
-            for j in range(i, dim):
-                HMat[i, j] += self.HI2(i, j)
                 HMat[j, i] = HMat[i, j]
         return HMat
 
-
-    def solve(self):
-        H = self.HMat()
-        eigvals, eigvecs = np.linalg.eigh(H)
-        return H, eigvals, eigvecs
-
-    def HI2(self, idx1, idx2):
+    def HI(self, idx1, idx2):
+        """
+        Calculates the two-body interactions
+        for an element in the Hamiltonian
+        matrix.
+        """
         state1 = self.mpbasis[idx1]
         state2 = self.mpbasis[idx2]
         energy = 0
@@ -231,33 +169,44 @@ class State:
             h2 = phidxs2[0]
             p2 = phidxs2[1]
         if idx1 == 0 and idx2 == 0:
+            """
+            Two-body interactions of
+            ground state ansatz
+            """
             for k in range(self.nparticles):
                 for l in range(self.nparticles):
                     energy += 0.5*self.VAS[k, l, k, l]
-                    energy -= 0.5*self.VAS[k, l, l, k]
 
         elif idx1 == 0:
+            """
+            Two body ints between ground state ansatz
+            and singly-excited states
+            """
             for k in range(self.nparticles):
                 energy += self.VAS[h2, k, p2, k]
-                energy -= self.VAS[h2, k, k, p2]
 
         else:
+            """
+            Two-body ints between two singly-excited
+            states.
+            """
             energy += self.VAS[p1, h2, h1, p2]
-            energy -= self.VAS[p1, h2, p2, h1]
             for k in range(self.nparticles):
                 energy += self.VAS[p1, k, p2, k]*(h1==h2)
-                energy -= self.VAS[p1, k, k, p2]*(h1==h2)
                 energy -= self.VAS[h2, k, h1, k]*(p1==p2)
-                energy += self.VAS[h2, k, k, h1]*(p1==p2)
                 for l in range(self.nparticles):
                     if h1 == h2 and p1 == p2:
                         energy += 0.5*self.VAS[k, l, k, l]
-                        energy -= 0.5*self.VAS[k, l, l, k]
 
         return energy
 
-    def solve2(self):
-        H = self.HMat2()
+    def diagonalize(self):
+        """
+        Diagonalizes the Hamiltonian matrix and returns eigenvalues
+        and eigenvectors associated with the diagonalization, along
+        with the Hamiltonian matrix itself.
+        """
+        H = self.HMat()
         eigvals, eigvecs = np.linalg.eigh(H)
         return H, eigvals, eigvecs
 

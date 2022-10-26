@@ -1,4 +1,4 @@
-from src import QuantumState, State, Hamiltonian, Reformatter, HF
+from src import QuantumState, State, Reformatter, HF
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -37,25 +37,20 @@ for i in range(81):
 VHedata = VNew
 reformatter = Reformatter(3, 6)
 VHe = reformatter.get_values(VHedata)
+"""
+Makes a four-dim tensor that holds all antisymmetrized
+elements of the two-body potential in our basis, but
+with labeling 0,1,2,3,4,5
+"""
 VHe_AS = reformatter.make_antisymmetrized_elements(VHedata)
-for i in range(2):
-    ni = i // 2
-    for j in range(2):
-        nj = j // 2
-        print(f"for i={i} and j={j}: ")
-        print("VHE: ", VHe[ni, nj, ni, nj])
-        print("VHe (AS): ", VHe[ni, nj, nj, ni])
-        print("VHeAS: ", VHe_AS[i, j, i, j])
-        print("VHeAS(AS): ", VHe_AS[i, j, j, i])
-
-
 
 Z = 2
 nbasis = 6
 nparticles = 2
-ground_He_ansatz = np.zeros(6, dtype=bool)
+ground_Be_ansatz = np.zeros(nbasis, dtype=bool)
 for i in range(nparticles):
-    ground_He_ansatz[i] = True
+    ground_Be_ansatz[i] = True
 
-hf = HF(ground_He_ansatz, Z, VHe_AS)
-hfenergies = hf.HFsolve(10, 1e-8)
+hf = HF(ground_Be_ansatz, Z, VHe_AS)
+hfenergies = hf.HFsolve(1000, 1e-10)
+print("Final HF energies: ", hfenergies)
