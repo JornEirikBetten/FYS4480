@@ -7,7 +7,7 @@ import pandas as pd
 
 def replace(V, val):
     """
-    Formatting function. 
+    Formatting function.
     """
     Vcopy = V["V"].copy()
     Vreturn = V.copy()
