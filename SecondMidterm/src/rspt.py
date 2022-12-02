@@ -45,13 +45,7 @@ class RSPT:
         return np.array(mbstates)
 
     def interaction(self, state1, state2):
-        interaction = 0
-        if np.sum(state1^state2) == 0:
-            interaction -= self.g
-        elif np.sum(state1^state2) == 2:
-            interaction -= self.g/2
-        elif np.sum(state1^state2) == 4:
-            interaction += 0
+        interaction = -self.g/2*np.sum(state1==state2)*self.nparticles/self.nbasis
         return interaction
 
     def H0(self, state):
@@ -75,10 +69,12 @@ class RSPT:
             if i==0:
                 continue
             else:
-                energy += (self.interaction(self.ground_state, state)*self.interaction(self.ground_state, state))/\
-                          (self.H0(self.ground_state)-self.H0(state))
+                V0state = self.interaction(self.ground_state, state)
+                Vstate0 = self.interaction(state, self.ground_state)
+                denominator = self.H0(self.ground_state)-self.H0(state)
+                energy += V0state*Vstate0/denominator
 
-        print(f"Interaction 4p4h state and ground state: {self.interaction(self.ground_state, self.mbstates[-1])}")
+        #print(f"Interaction 4p4h state and ground state: {self.interaction(self.ground_state, np.array([False, False, True, True]))}")
         return energy
 
     def third_order(self):
@@ -132,16 +128,16 @@ class RSPT:
         if order==0:
             energy = self.zeroth_order()
         elif order==1:
-            energy = self.zeroth_order() - self.first_order()
+            energy = self.zeroth_order() + self.first_order()
         elif order==2:
-            energy = self.zeroth_order() - self.first_order() -\
+            energy = self.zeroth_order() + self.first_order() +\
                      self.second_order()
         elif order==3:
-            energy = self.zeroth_order() - self.first_order() -\
-                     self.second_order() - self.third_order()
+            energy = self.zeroth_order() + self.first_order() +\
+                     self.second_order() + self.third_order()
         else:
-            energy = self.zeroth_order() - self.first_order() -\
-                     self.second_order() - self.third_order() -\
+            energy = self.zeroth_order() + self.first_order() +\
+                     self.second_order() + self.third_order() +\
                      self.fourth_order()
         return energy
 
