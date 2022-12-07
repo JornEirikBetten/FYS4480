@@ -9,3 +9,8 @@ Hartree-Fock scheme with the pairing interaction. Takes in the number of particl
 
 ## RSPT
 Rayleigh-Schroedinger perturbation theory implementation, with the pairing interaction. Takes in the number of basis functions and the number of particles and performs the calculation to the specified order.
+
+
+### How to run:
+Script to run various calculations: <br>
+python3 main_rspt.py <br>
