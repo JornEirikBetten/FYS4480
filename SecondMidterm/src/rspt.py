@@ -9,11 +9,11 @@ class RSPT:
         self.nbasis = nbasis
         self.ground_state = np.array([1*(i<self.nparticles) for i in range(self.nbasis)], dtype=bool)
         self.mbstates = self.all_states()
-
+        """
         for state in self.mbstates:
             print(f"Interaction between ground state, {self.ground_state} and")
             print(f"state, {self.ground_state}: {self.interaction(self.ground_state, state)}")
-
+        """
 
     def info(self):
         print(f"Initiated with g={self.g} and ground state:")

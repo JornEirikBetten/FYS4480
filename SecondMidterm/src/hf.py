@@ -63,8 +63,8 @@ class HartreeFock:
                 HF[p, q] += field_interaction
 
 
-        #print("HF Matrix")
-        #print(HF)
+        print("HF Matrix")
+        print(HF)
         # Diagonalizes the HF matrix
         new_energies, self.C = np.linalg.eigh(HF)
         #print("New energies")

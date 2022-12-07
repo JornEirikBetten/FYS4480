@@ -4,7 +4,7 @@ import numpy as np
 class FCI:
     def __init__(self, nbasis, nparticles, g, fullCI):
         self.g = g
-        self.fullCI = fullCI 
+        self.fullCI = fullCI
         self.nparticles = nparticles
         self.nbasis = nbasis
         self.ground_state = np.array([1*(i<self.nparticles) for i in range(self.nbasis)], dtype=bool)
